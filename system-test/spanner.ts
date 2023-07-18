@@ -2822,6 +2822,34 @@ describe('Spanner', () => {
       await pastBackupExpirationTimeError(postgreSqlDatabase1);
     });
 
+    const BackupNullExpirationTimeError = async database1 => {
+      // Create backup.
+      const backupName = generateName('backup');
+      const backup = instance.backup(backupName);
+      try {
+        await backup.create({
+          databasePath: database1.formattedName_,
+        });
+        assert.fail(
+          'Backup should have failed for expiration time is null'
+        );
+      } catch (err) {
+        // Expect to get invalid argument error indicating that the expiry time is mandatory
+        assert.strictEqual(
+          (err as grpc.ServiceError).code,
+          grpc.status.INVALID_ARGUMENT
+        );
+      }
+    };
+
+    it('GOOGLE_STANDARD_SQL should return error for create backup with null expiration time', async () => {
+      await BackupNullExpirationTimeError(googleSqlDatabase1);
+    });
+
+    it.skip('POSTGRESQL should return error for create backup with null expiration time', async () => {
+      await BackupNullExpirationTimeError(postgreSqlDatabase1);
+    });
+
     it('should return false for a backup that does not exist', async () => {
       // This backup won't exist, we're just generating the name without creating the backup itself.
       const backupName = generateName('backup');
